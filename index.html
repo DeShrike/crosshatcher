@@ -50,7 +50,12 @@
       #canvas {
          margin-left: 5px;
       }
-      .btn {
+      #theimage {
+         width: auto;
+         height: auto;
+         display: none;
+      }
+      .btn, input::file-selector-button {
          padding: 2px;
          padding-left: 10px;
          padding-right: 10px;
@@ -59,7 +64,7 @@
          cursor: pointer;
          color: black;
       }
-      .btn:hover {
+      .btn:hover, input::file-selector-button:hover {
          background-color: #999999;
       }
       .btn.plusmin {
@@ -77,32 +82,37 @@
       <div id="container">
          <div id="header">
             <h2>Crosshatching</h2>
+            <div id="sfcu85jrwhsw3pz7w3bxlbaumrz4m4mc44h"></div>
          </div>
          <div id="body">
             <canvas id="canvas"></canvas>
+            <img src="#" id="theimage">
          </div>
          <div id="footer">
             <div>
-               <button type="button" id="loadbutton" class="btn">Load Image</button>
+               <input type="file" id="loadButton">
+               <!--<button type="button" id="loadbutton" class="btn">Load Image</button>-->
             </div>
             <div class="plusminwrapper">
                <label>Layers</label>
-               <button type="button" class="btn plusmin">-</button>
-               <label>6</label>
-               <button type="button" class="btn plusmin">+</button>
+               <button type="button" id="decLayersButton" class="btn plusmin">-</button>
+               <label id="layersLabel">6</label>
+               <button type="button" id="incLayersButton" class="btn plusmin">+</button>
             </div>
             <div class="plusminwrapper">
                <label>Line Spacing</label>
-               <button type="button" class="btn plusmin">-</button>
-               <label>10</label>
-               <button type="button" class="btn plusmin">+</button>
+               <button type="button" id="decSpacingButton" class="btn plusmin">-</button>
+               <label id="spacingLabel">10</label>
+               <button type="button" id="incSpacingButton" class="btn plusmin">+</button>
             </div>
             <div>
-               <button type="button" id="exportbutton" class="btn">Export SVG</button>
+               <button type="button" id="exportButton" class="btn">Export SVG</button>
             </div>
          </div>
      </div>
 
      <script src="index.js"></script>
+
+     <!--<script type="text/javascript" src="https://counter8.optistats.ovh/private/counter.js?c=u85jrwhsw3pz7w3bxlbaumrz4m4mc44h&down=async&FCS_rest=standard" async></script>-->
    </body>
 </html>
