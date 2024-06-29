@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html id="html">
+   <head>
+      <title>Crosshatching</title>
+      <style>
+      * {
+         margin: 0;
+         padding: 0;
+      }
+      html,
+      body {
+         margin:0;
+         padding:0;
+         height:100%;
+         font-family: Arial;
+         background-color: black;
+      }
+      #container {
+         min-height:100%;
+         position:relative;
+      }
+      #header {
+         color: white;
+         padding: 5px;
+         display: flex;
+         justify-content: center;
+      }
+      #body {
+         padding: 0;
+         margin: 0;
+      }
+      #footer {
+         position:absolute;
+         bottom:0;
+         width:100%;
+         display: flex;
+         background-color: #444444;
+         padding: 0;
+         margin-top: 5px;
+         justify-content: space-between;
+      }
+      #header h2 {
+         padding: 0;
+         margin: 0;
+      }
+      #footer div
+      {
+         padding: 5px;
+      }
+      #canvas {
+         margin-left: 5px;
+      }
+      .btn {
+         padding: 2px;
+         padding-left: 10px;
+         padding-right: 10px;
+         border: none;
+         border-radius: 3px;
+         cursor: pointer;
+         color: black;
+      }
+      .btn:hover {
+         background-color: #999999;
+      }
+      .btn.plusmin {
+         width: 30px;
+      }
+      .plusminwrapper {
+         white-space: nowrap;
+      }
+      label {
+         font-size: 15px;
+      }
+      </style>
+   </head>
+   <body id="body">
+      <div id="container">
+         <div id="header">
+            <h2>Crosshatching</h2>
+         </div>
+         <div id="body">
+            <canvas id="canvas"></canvas>
+         </div>
+         <div id="footer">
+            <div>
+               <button type="button" id="loadbutton" class="btn">Load Image</button>
+            </div>
+            <div class="plusminwrapper">
+               <label>Layers</label>
+               <button type="button" class="btn plusmin">-</button>
+               <label>6</label>
+               <button type="button" class="btn plusmin">+</button>
+            </div>
+            <div class="plusminwrapper">
+               <label>Line Spacing</label>
+               <button type="button" class="btn plusmin">-</button>
+               <label>10</label>
+               <button type="button" class="btn plusmin">+</button>
+            </div>
+            <div>
+               <button type="button" id="exportbutton" class="btn">Export SVG</button>
+            </div>
+         </div>
+     </div>
+
+     <script src="index.js"></script>
+   </body>
+</html>
