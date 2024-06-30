@@ -14,12 +14,17 @@ class Crosshatch {
         this.drawingWidth = 0;
         this.drawingHeight = 0;
         this.scaleFactor = 1;
+        this.translateAmount = new Vector2(0, 0);
+        this.fullTranslateAmount = new Vector2(0, 0);
+        this.mouseDown = false;
+        this.mouseDownPos = new Vector2(0, 0);
         console.log("Crosshatching");
         this.thecanvas = document.getElementById("canvas");
         if (this.thecanvas === null) {
             throw new Error("No canvas element with id 'canvas'.");
         }
         this.boundHandleFileInput = this.handleFileInput.bind(this);
+        this.boundHandleMouseEvent = this.handleMouseEvent.bind(this);
         this.pixels = null;
         this.setSize(this.thecanvas);
         this.ctx = this.thecanvas.getContext("2d");
@@ -65,6 +70,7 @@ class Crosshatch {
         this.ctx.fillStyle = "#181818";
         this.ctx.fillRect(0, 0, this.thecanvas.width, this.thecanvas.height);
         this.drawImagePreview();
+        this.ctx.translate(...this.translateAmount.add(this.fullTranslateAmount).array());
         this.ctx.scale(this.scaleFactor, this.scaleFactor);
         this.ctx.fillStyle = "red";
         this.fillCircle(tl, 10);
@@ -129,6 +135,33 @@ class Crosshatch {
         this.linespacing += delta;
         this.setLabels();
     }
+    screenToWorld(v) {
+        return v.sub(this.fullTranslateAmount).scale(1 / this.scaleFactor);
+    }
+    handleMouseEvent(e) {
+        if (e.type === "mouseup") {
+            this.mouseDown = false;
+            this.fullTranslateAmount = this.fullTranslateAmount.add(this.translateAmount);
+            this.translateAmount = new Vector2(0, 0);
+        }
+        else if (e.type === "mousedown") {
+            this.mouseDownPos = new Vector2(e.offsetX, e.offsetY);
+            this.mouseDown = true;
+            console.log(this.mouseDownPos);
+            this.ctx.fillStyle = "blue";
+            this.fillCircle(this.screenToWorld(this.mouseDownPos), 10);
+        }
+        else if (e.type === "mousemove") {
+            if (this.mouseDown) {
+                const newPos = new Vector2(e.offsetX, e.offsetY);
+                this.translateAmount = newPos.sub(this.mouseDownPos);
+                //this.mouseDownPos = newPos;
+                console.log(e.type);
+                this.draw();
+            }
+        }
+        //console.log(e);
+    }
     initProject() {
         if (this.ctx == null) {
             return;
@@ -137,6 +170,8 @@ class Crosshatch {
         this.drawingWidth = 1000;
         this.drawingHeight = Math.ceil(this.imageHeight * (this.drawingWidth / this.imageWidth));
         console.log(`Drawing ${this.drawingWidth}x${this.drawingHeight}`);
+        this.fullTranslateAmount = new Vector2(0, 0);
+        this.translateAmount = new Vector2(0, 0);
         this.scaleFactor = 1;
         const cw = this.ctx.canvas.width;
         const ch = this.ctx.canvas.height;
@@ -154,6 +189,7 @@ class Crosshatch {
         this.draw();
     }
     init() {
+        var _a, _b, _c;
         const exportButton = document.getElementById("exportButton");
         exportButton === null || exportButton === void 0 ? void 0 : exportButton.addEventListener("click", this.handleExportButton);
         //const loadButton = <HTMLElement>document.getElementById("loadButton");
@@ -173,6 +209,9 @@ class Crosshatch {
         incLayersButton.addEventListener("click", (e) => { this.handleChangeLayers(1); });
         decSpacingButton.addEventListener("click", (e) => { this.handleChangeSpacing(-1); });
         incSpacingButton.addEventListener("click", (e) => { this.handleChangeSpacing(1); });
+        (_a = this.thecanvas) === null || _a === void 0 ? void 0 : _a.addEventListener("mousedown", this.boundHandleMouseEvent);
+        (_b = this.thecanvas) === null || _b === void 0 ? void 0 : _b.addEventListener("mouseup", this.boundHandleMouseEvent);
+        (_c = this.thecanvas) === null || _c === void 0 ? void 0 : _c.addEventListener("mousemove", this.boundHandleMouseEvent);
     }
     setSize(canvas) {
         const container = document.getElementById("container");

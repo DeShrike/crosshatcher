@@ -11,6 +11,7 @@ class Crosshatch {
    private layers: number = 5;
 
    private boundHandleFileInput: (this: HTMLElement, ev: Event) => any;
+   private boundHandleMouseEvent: (this: HTMLElement, ev: MouseEvent) => any;
 
    private pixels: Uint8ClampedArray | null = null;
    private imageWidth: number = 0;
@@ -18,7 +19,13 @@ class Crosshatch {
    private imageName: string = "";
    private drawingWidth: number = 0;
    private drawingHeight: number = 0;
+
    private scaleFactor: number = 1;
+   private translateAmount: Vector2 = new Vector2(0, 0);
+   private fullTranslateAmount: Vector2 = new Vector2(0, 0);
+
+   private mouseDown: boolean = false;
+   private mouseDownPos: Vector2 = new Vector2(0, 0);
    
    constructor() {
       console.log("Crosshatching");
@@ -27,9 +34,10 @@ class Crosshatch {
       {
          throw new Error("No canvas element with id 'canvas'.");
       }
-      
+
       this.boundHandleFileInput = this.handleFileInput.bind(this);
-      
+      this.boundHandleMouseEvent = this.handleMouseEvent.bind(this);
+
       this.pixels = null;
 
       this.setSize(this.thecanvas);
@@ -87,6 +95,7 @@ class Crosshatch {
       this.ctx.fillRect(0, 0, this.thecanvas!.width, this.thecanvas!.height);
       this.drawImagePreview();
 
+      this.ctx.translate(...this.translateAmount.add(this.fullTranslateAmount).array());
       this.ctx.scale(this.scaleFactor, this.scaleFactor);
 
       this.ctx.fillStyle = "red";
@@ -167,6 +176,36 @@ class Crosshatch {
       this.setLabels();
    }
 
+   screenToWorld(v: Vector2): Vector2 {
+      return v.sub(this.fullTranslateAmount).scale(1 / this.scaleFactor)
+   }
+
+   handleMouseEvent(e: MouseEvent) {
+      if (e.type === "mouseup") {
+         this.mouseDown = false;
+         this.fullTranslateAmount = this.fullTranslateAmount.add(this.translateAmount);
+         this.translateAmount = new Vector2(0, 0);
+      }
+      else if (e.type === "mousedown") {
+         this.mouseDownPos = new Vector2(e.offsetX, e.offsetY);
+         this.mouseDown = true;
+         console.log(this.mouseDownPos);
+         this.ctx.fillStyle = "blue";
+         this.fillCircle(this.screenToWorld(this.mouseDownPos), 10);
+      }
+      else if (e.type === "mousemove") {
+         if (this.mouseDown) {
+            const newPos = new Vector2(e.offsetX, e.offsetY);
+            this.translateAmount = newPos.sub(this.mouseDownPos);
+            //this.mouseDownPos = newPos;
+            console.log(e.type);
+            this.draw();
+         }
+      }
+
+      //console.log(e);
+   }
+
    initProject() {
       if (this.ctx == null) {
          return;
@@ -177,6 +216,8 @@ class Crosshatch {
       this.drawingHeight = Math.ceil(this.imageHeight * (this.drawingWidth / this.imageWidth));
       console.log(`Drawing ${this.drawingWidth}x${this.drawingHeight}`);
 
+      this.fullTranslateAmount = new Vector2(0, 0);
+      this.translateAmount = new Vector2(0, 0);
       this.scaleFactor = 1;
       const cw: number = this.ctx.canvas.width;
       const ch: number = this.ctx.canvas.height;
@@ -228,6 +269,10 @@ class Crosshatch {
       incLayersButton.addEventListener("click", (e: Event) => { this.handleChangeLayers(1); });
       decSpacingButton.addEventListener("click", (e: Event) => { this.handleChangeSpacing(-1); });
       incSpacingButton.addEventListener("click", (e: Event) => { this.handleChangeSpacing(1); });
+
+      this.thecanvas?.addEventListener("mousedown", this.boundHandleMouseEvent);
+      this.thecanvas?.addEventListener("mouseup", this.boundHandleMouseEvent);
+      this.thecanvas?.addEventListener("mousemove", this.boundHandleMouseEvent);
    }
 
    setSize(canvas: HTMLCanvasElement) {
@@ -249,8 +294,7 @@ class Crosshatch {
    run() {
       this.setLabels();
       console.log(this.pixels);
-      
-      
+
       this.draw();
    }
 }
