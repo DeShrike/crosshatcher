@@ -1,4 +1,4 @@
-"use strict";
+import Vector2 from "./vector2.js";
 class Crosshatch {
     constructor() {
         this.thecanvas = null;
@@ -8,6 +8,12 @@ class Crosshatch {
         this.linespacing = 20;
         this.layers = 5;
         this.pixels = null;
+        this.imageWidth = 0;
+        this.imageHeight = 0;
+        this.imageName = "";
+        this.drawingWidth = 0;
+        this.drawingHeight = 0;
+        this.scaleFactor = 1;
         console.log("Crosshatching");
         this.thecanvas = document.getElementById("canvas");
         if (this.thecanvas === null) {
@@ -23,6 +29,19 @@ class Crosshatch {
         this.ctx.fillStyle = "#181818";
         this.ctx.fillRect(0, 0, this.thecanvas.width, this.thecanvas.height);
     }
+    fillCircle(center, radius) {
+        var _a, _b, _c;
+        (_a = this.ctx) === null || _a === void 0 ? void 0 : _a.beginPath();
+        (_b = this.ctx) === null || _b === void 0 ? void 0 : _b.arc(...center.array(), radius, 0, 2 * Math.PI);
+        (_c = this.ctx) === null || _c === void 0 ? void 0 : _c.fill();
+    }
+    strokeLine(p1, p2) {
+        var _a, _b, _c, _d;
+        (_a = this.ctx) === null || _a === void 0 ? void 0 : _a.beginPath();
+        (_b = this.ctx) === null || _b === void 0 ? void 0 : _b.moveTo(...p1.array());
+        (_c = this.ctx) === null || _c === void 0 ? void 0 : _c.lineTo(...p2.array());
+        (_d = this.ctx) === null || _d === void 0 ? void 0 : _d.stroke();
+    }
     setLabels() {
         this.layersLabel.innerHTML = `${this.layers}`;
         this.spacingLabel.innerHTML = `${this.linespacing}`;
@@ -35,9 +54,27 @@ class Crosshatch {
         (_a = this.ctx) === null || _a === void 0 ? void 0 : _a.drawImage(img, 0, 0, img.width, img.height, 0, 0, pwidth, pheight);
     }
     draw() {
-        var _a;
-        (_a = this.ctx) === null || _a === void 0 ? void 0 : _a.fillRect(0, 0, this.thecanvas.width, this.thecanvas.height);
+        if (this.ctx === null) {
+            return;
+        }
+        const tl = new Vector2(0, 0);
+        const tr = new Vector2(this.drawingWidth, 0);
+        const bl = new Vector2(0, this.drawingHeight);
+        const br = new Vector2(this.drawingWidth, this.drawingHeight);
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset Scale
+        this.ctx.fillStyle = "#181818";
+        this.ctx.fillRect(0, 0, this.thecanvas.width, this.thecanvas.height);
         this.drawImagePreview();
+        this.ctx.scale(this.scaleFactor, this.scaleFactor);
+        this.ctx.fillStyle = "red";
+        this.fillCircle(tl, 10);
+        this.ctx.fillStyle = "green";
+        this.fillCircle(tr, 10);
+        this.fillCircle(bl, 10);
+        this.fillCircle(br, 10);
+        this.ctx.strokeStyle = "white";
+        this.strokeLine(tl, br);
+        this.strokeLine(tr, bl);
     }
     handleExportButton(ev) {
         ev.preventDefault();
@@ -68,7 +105,10 @@ class Crosshatch {
                 try {
                     const imgData = tempcontext.getImageData(0, 0, img.width, img.height);
                     this.pixels = imgData.data;
-                    this.run();
+                    this.imageWidth = img.width;
+                    this.imageHeight = img.height;
+                    this.imageName = e.target.files[0].name;
+                    this.initProject();
                 }
                 catch (e) {
                     this.pixels = null;
@@ -88,6 +128,30 @@ class Crosshatch {
     handleChangeSpacing(delta) {
         this.linespacing += delta;
         this.setLabels();
+    }
+    initProject() {
+        if (this.ctx == null) {
+            return;
+        }
+        console.log(`New Project: ${this.imageName}: ${this.imageWidth}x${this.imageHeight}`);
+        this.drawingWidth = 1000;
+        this.drawingHeight = Math.ceil(this.imageHeight * (this.drawingWidth / this.imageWidth));
+        console.log(`Drawing ${this.drawingWidth}x${this.drawingHeight}`);
+        this.scaleFactor = 1;
+        const cw = this.ctx.canvas.width;
+        const ch = this.ctx.canvas.height;
+        let sf1 = 1;
+        let sf2 = 1;
+        if (this.drawingWidth > cw) {
+            sf1 = cw / this.drawingWidth;
+        }
+        if (this.drawingHeight > ch) {
+            sf2 = ch / this.drawingHeight;
+        }
+        console.log(`SF1: ${sf1}   SF2: ${sf2}`);
+        this.scaleFactor = Math.min(sf1, sf2);
+        this.ctx.lineWidth = 1;
+        this.draw();
     }
     init() {
         const exportButton = document.getElementById("exportButton");
@@ -120,7 +184,7 @@ class Crosshatch {
         }
         canvas.height = container.offsetHeight - (header.offsetHeight + footer.offsetHeight + 10);
         canvas.width = container.offsetWidth - 10;
-        console.log(canvas.width, canvas.height);
+        console.log(`Canvas: ${canvas.width}x${canvas.height}`);
     }
     run() {
         this.setLabels();
@@ -132,22 +196,3 @@ class Crosshatch {
     const c = new Crosshatch();
     c.init();
 })();
-/*
-
-
-<div id="sfcu85jrwhsw3pz7w3bxlbaumrz4m4mc44h"></div>
-<script type="text/javascript" src="https://counter8.optistats.ovh/private/counter.js?c=u85jrwhsw3pz7w3bxlbaumrz4m4mc44h&down=async" async></script>
-<br>
-<a href="https://www.freecounterstat.com">free counter</a>
-<noscript>
-<a href="https://www.freecounterstat.com" title="free counter"><img src="https://counter8.optistats.ovh/private/freecounterstat.php?c=u85jrwhsw3pz7w3bxlbaumrz4m4mc44h" border="0" title="free counter" alt="free counter"></a>
-</noscript>
-
-No java:
-<a href="https://www.freecounterstat.com" title="free counter"><img src="https://counter8.optistats.ovh/private/freecounterstat.php?c=u85jrwhsw3pz7w3bxlbaumrz4m4mc44h" border="0" title="free counter" alt="free counter"></a>
-
-
-
-
-
-*/ 

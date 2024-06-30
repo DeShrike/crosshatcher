@@ -1,3 +1,5 @@
+import Vector2 from "./vector2.js";
+
 class Crosshatch {
    private thecanvas: HTMLCanvasElement | null = null;
    private ctx: CanvasRenderingContext2D | null = null;
@@ -7,10 +9,17 @@ class Crosshatch {
 
    private linespacing: number = 20;
    private layers: number = 5;
+
    private boundHandleFileInput: (this: HTMLElement, ev: Event) => any;
 
    private pixels: Uint8ClampedArray | null = null;
-
+   private imageWidth: number = 0;
+   private imageHeight: number = 0;
+   private imageName: string = "";
+   private drawingWidth: number = 0;
+   private drawingHeight: number = 0;
+   private scaleFactor: number = 1;
+   
    constructor() {
       console.log("Crosshatching");
       this.thecanvas = document.getElementById("canvas") as (HTMLCanvasElement | null);
@@ -35,6 +44,21 @@ class Crosshatch {
       this.ctx.fillRect(0, 0, this.thecanvas.width, this.thecanvas.height);
    }
 
+   fillCircle(center: Vector2, radius: number)
+   {
+      this.ctx?.beginPath();
+      this.ctx?.arc(...center.array(), radius, 0, 2 * Math.PI);
+      this.ctx?.fill();
+   }
+
+   strokeLine(p1: Vector2, p2: Vector2)
+   {
+      this.ctx?.beginPath();
+      this.ctx?.moveTo(...p1.array());
+      this.ctx?.lineTo(...p2.array());
+      this.ctx?.stroke();
+   }
+
    setLabels() {
       this.layersLabel!.innerHTML = `${this.layers}`;
       this.spacingLabel!.innerHTML = `${this.linespacing}`;
@@ -48,8 +72,33 @@ class Crosshatch {
    }
 
    draw() {
-      this.ctx?.fillRect(0, 0, this.thecanvas!.width, this.thecanvas!.height);
+      if (this.ctx === null) {
+         return;
+      }
+
+      const tl = new Vector2(0, 0);
+      const tr = new Vector2(this.drawingWidth, 0);
+      const bl = new Vector2(0, this.drawingHeight);
+      const br = new Vector2(this.drawingWidth, this.drawingHeight);
+
+      this.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset Scale
+
+      this.ctx.fillStyle = "#181818";
+      this.ctx.fillRect(0, 0, this.thecanvas!.width, this.thecanvas!.height);
       this.drawImagePreview();
+
+      this.ctx.scale(this.scaleFactor, this.scaleFactor);
+
+      this.ctx.fillStyle = "red";
+      this.fillCircle(tl, 10);
+      this.ctx.fillStyle = "green";
+      this.fillCircle(tr, 10);
+      this.fillCircle(bl, 10);
+      this.fillCircle(br, 10);
+      
+      this.ctx.strokeStyle = "white";
+      this.strokeLine(tl, br);
+      this.strokeLine(tr, bl);
    }
 
    handleExportButton(this: HTMLElement, ev: MouseEvent): any {
@@ -90,7 +139,10 @@ class Crosshatch {
             try {
                const imgData = tempcontext.getImageData(0, 0, img.width, img.height);
                this.pixels = imgData.data;
-               this.run();
+               this.imageWidth = img.width;
+               this.imageHeight = img.height;
+               this.imageName = e.target.files[0].name;
+               this.initProject();
             } catch(e){
                this.pixels = null;
                throw e;
@@ -113,6 +165,40 @@ class Crosshatch {
    handleChangeSpacing(delta: number) {
       this.linespacing += delta;
       this.setLabels();
+   }
+
+   initProject() {
+      if (this.ctx == null) {
+         return;
+      }
+
+      console.log(`New Project: ${this.imageName}: ${this.imageWidth}x${this.imageHeight}`);
+      this.drawingWidth = 1000;
+      this.drawingHeight = Math.ceil(this.imageHeight * (this.drawingWidth / this.imageWidth));
+      console.log(`Drawing ${this.drawingWidth}x${this.drawingHeight}`);
+
+      this.scaleFactor = 1;
+      const cw: number = this.ctx.canvas.width;
+      const ch: number = this.ctx.canvas.height;
+
+      let sf1: number = 1;
+      let sf2: number = 1;
+      if (this.drawingWidth > cw)
+      {
+         sf1 = cw / this.drawingWidth;
+      }
+
+      if (this.drawingHeight > ch)
+      {
+         sf2 = ch / this.drawingHeight;
+      }
+
+      console.log(`SF1: ${sf1}   SF2: ${sf2}`);
+
+      this.scaleFactor = Math.min(sf1, sf2);
+      this.ctx.lineWidth = 1;
+
+      this.draw();
    }
 
    init() {
@@ -157,7 +243,7 @@ class Crosshatch {
       canvas.height = container.offsetHeight - (header.offsetHeight + footer.offsetHeight + 10);
       canvas.width = container.offsetWidth - 10;
 
-      console.log(canvas.width, canvas .height);
+      console.log(`Canvas: ${canvas.width}x${canvas .height}`);
    }
 
    run() {
@@ -174,24 +260,3 @@ class Crosshatch {
    c.init();
 })();
 
-
-
-/*
-
-
-<div id="sfcu85jrwhsw3pz7w3bxlbaumrz4m4mc44h"></div>
-<script type="text/javascript" src="https://counter8.optistats.ovh/private/counter.js?c=u85jrwhsw3pz7w3bxlbaumrz4m4mc44h&down=async" async></script>
-<br>
-<a href="https://www.freecounterstat.com">free counter</a>
-<noscript>
-<a href="https://www.freecounterstat.com" title="free counter"><img src="https://counter8.optistats.ovh/private/freecounterstat.php?c=u85jrwhsw3pz7w3bxlbaumrz4m4mc44h" border="0" title="free counter" alt="free counter"></a>
-</noscript>
-
-No java:
-<a href="https://www.freecounterstat.com" title="free counter"><img src="https://counter8.optistats.ovh/private/freecounterstat.php?c=u85jrwhsw3pz7w3bxlbaumrz4m4mc44h" border="0" title="free counter" alt="free counter"></a>
-
-
-
-
-
-*/
