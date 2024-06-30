@@ -12,6 +12,7 @@ class Crosshatch {
 
    private boundHandleFileInput: (this: HTMLElement, ev: Event) => any;
    private boundHandleMouseEvent: (this: HTMLElement, ev: MouseEvent) => any;
+   private boundHandleWheelEvent: (this: HTMLElement, ev: WheelEvent) => any;
 
    private pixels: Uint8ClampedArray | null = null;
    private imageWidth: number = 0;
@@ -37,6 +38,7 @@ class Crosshatch {
 
       this.boundHandleFileInput = this.handleFileInput.bind(this);
       this.boundHandleMouseEvent = this.handleMouseEvent.bind(this);
+      this.boundHandleWheelEvent = this.handleWheelEvent.bind(this);
 
       this.pixels = null;
 
@@ -180,6 +182,20 @@ class Crosshatch {
       return v.sub(this.fullTranslateAmount).scale(1 / this.scaleFactor)
    }
 
+   handleWheelEvent(e: WheelEvent) {
+      if (e.type === "wheel") {
+         console.log(`Delta: ${e.deltaX} x ${e.deltaY}`);
+         if (e.deltaY < 0) {
+            this.scaleFactor += (e.deltaY / 1000);
+            this.draw();
+         }
+         else if (e.deltaY > 0) {
+            this.scaleFactor += (e.deltaY / 1000);
+            this.draw();
+         }
+      }
+   }
+
    handleMouseEvent(e: MouseEvent) {
       if (e.type === "mouseup") {
          this.mouseDown = false;
@@ -189,7 +205,7 @@ class Crosshatch {
       else if (e.type === "mousedown") {
          this.mouseDownPos = new Vector2(e.offsetX, e.offsetY);
          this.mouseDown = true;
-         console.log(this.mouseDownPos);
+         // console.log(this.mouseDownPos);
          this.ctx.fillStyle = "blue";
          this.fillCircle(this.screenToWorld(this.mouseDownPos), 10);
       }
@@ -198,12 +214,9 @@ class Crosshatch {
             const newPos = new Vector2(e.offsetX, e.offsetY);
             this.translateAmount = newPos.sub(this.mouseDownPos);
             //this.mouseDownPos = newPos;
-            console.log(e.type);
             this.draw();
          }
       }
-
-      //console.log(e);
    }
 
    initProject() {
@@ -273,6 +286,7 @@ class Crosshatch {
       this.thecanvas?.addEventListener("mousedown", this.boundHandleMouseEvent);
       this.thecanvas?.addEventListener("mouseup", this.boundHandleMouseEvent);
       this.thecanvas?.addEventListener("mousemove", this.boundHandleMouseEvent);
+      this.thecanvas?.addEventListener("wheel", this.boundHandleWheelEvent);
    }
 
    setSize(canvas: HTMLCanvasElement) {
