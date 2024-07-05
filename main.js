@@ -1,4 +1,5 @@
 import Vector2 from "./vector2.js";
+import Crosshatcher from "./crosshatcher.js";
 class Main {
     constructor() {
         this.thecanvas = null;
@@ -6,7 +7,8 @@ class Main {
         this.layersLabel = null;
         this.spacingLabel = null;
         this.linespacing = 20;
-        this.layers = 5;
+        this.layers = 2;
+        this.lines = [];
         this.thumbWidth = 150;
         this.pixels = null;
         this.imageWidth = 0;
@@ -28,6 +30,10 @@ class Main {
         this.boundHandleMouseEvent = this.handleMouseEvent.bind(this);
         this.boundHandleWheelEvent = this.handleWheelEvent.bind(this);
         this.boundHandleResizeEvent = this.handleResizeEvent.bind(this);
+        this.boundHandleGenerateButton = this.handleGenerateButton.bind(this);
+        this.boundHandleExportButton = this.handleExportButton.bind(this);
+        this.boundProgress = this.progress.bind(this);
+        this.boundDrawFrame = this.drawFrame.bind(this);
         this.pixels = null;
         this.setSize(this.thecanvas);
         this.ctx = this.thecanvas.getContext("2d");
@@ -77,6 +83,9 @@ class Main {
         let pheight = img.height * (pwidth / img.width);
         (_a = this.ctx) === null || _a === void 0 ? void 0 : _a.drawImage(img, 0, 0, img.width, img.height, 0, 0, pwidth, pheight);
     }
+    drawFrame(timeStamp) {
+        this.draw();
+    }
     draw() {
         if (this.ctx === null) {
             return;
@@ -100,10 +109,19 @@ class Main {
         this.ctx.strokeStyle = "white";
         this.strokeLine(tl, br);
         this.strokeLine(tr, bl);
+        for (let line of this.lines) {
+            this.strokeLine(line[0], line[1]);
+        }
+    }
+    progress(p1, p2) {
+        this.lines.push([p1, p2]);
+        window.requestAnimationFrame(this.boundDrawFrame);
     }
     handleGenerateButton(ev) {
         ev.preventDefault();
-        alert("generate");
+        this.lines = [];
+        const ch = new Crosshatcher();
+        ch.generate(this.linespacing, this.layers, this.drawingWidth, this.drawingHeight, this.imageWidth, this.imageHeight, this.boundProgress);
     }
     handleExportButton(ev) {
         ev.preventDefault();
@@ -237,16 +255,17 @@ class Main {
         // console.log(`SF1: ${sf1}   SF2: ${sf2}`);
         this.scaleFactor = Math.min(sf1, sf2);
         this.ctx.lineWidth = 1;
+        this.lines = [];
         this.draw();
     }
     init() {
         var _a, _b, _c, _d;
         const exportButton = document.getElementById("exportButton");
-        exportButton === null || exportButton === void 0 ? void 0 : exportButton.addEventListener("click", this.handleExportButton);
+        exportButton === null || exportButton === void 0 ? void 0 : exportButton.addEventListener("click", this.boundHandleExportButton);
         //const loadButton = <HTMLElement>document.getElementById("loadButton");
-        //loadButton?.addEventListener("click", this.handleLoadButton);
+        //loadButton?.addEventListener("click", this.boundHandleLoadButton);
         const generateButton = document.getElementById("generateButton");
-        generateButton === null || generateButton === void 0 ? void 0 : generateButton.addEventListener("click", this.handleGenerateButton);
+        generateButton === null || generateButton === void 0 ? void 0 : generateButton.addEventListener("click", this.boundHandleGenerateButton);
         this.layersLabel = document.getElementById("layersLabel");
         this.spacingLabel = document.getElementById("spacingLabel");
         const fileinput = document.querySelector('input[type="file"]');

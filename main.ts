@@ -1,5 +1,5 @@
 import Vector2 from "./vector2.js";
-import CrossHatcher from "./crosshatcher.js";
+import Crosshatcher from "./crosshatcher.js";
 import { TProgressCallback } from "./types.js";
 
 class Main {
@@ -10,12 +10,20 @@ class Main {
    private spacingLabel: HTMLElement | null = null;
 
    private linespacing: number = 20;
-   private layers: number = 5;
+   private layers: number = 2;
+
+   private lines: [Vector2, Vector2][] = [];
+
+   private boundProgress: (p1: Vector2, p2: Vector2) => void;
+   private boundDrawFrame: (timestamp: number) => void;
 
    private boundHandleFileInput: (this: HTMLElement, ev: Event) => any;
    private boundHandleMouseEvent: (this: HTMLElement, ev: MouseEvent) => any;
    private boundHandleWheelEvent: (this: HTMLElement, ev: WheelEvent) => any;
    private boundHandleResizeEvent: (this: HTMLElement, ev: Event) => any;
+
+   private boundHandleGenerateButton: (this: HTMLElement, ev: Event) => any;
+   private boundHandleExportButton: (this: HTMLElement, ev: Event) => any;
    
    private thumbWidth: number = 150;
    private pixels: Uint8ClampedArray | null = null;
@@ -44,7 +52,11 @@ class Main {
       this.boundHandleMouseEvent = this.handleMouseEvent.bind(this);
       this.boundHandleWheelEvent = this.handleWheelEvent.bind(this);
       this.boundHandleResizeEvent = this.handleResizeEvent.bind(this);
-      
+      this.boundHandleGenerateButton = this.handleGenerateButton.bind(this);
+      this.boundHandleExportButton = this.handleExportButton.bind(this);
+      this.boundProgress = this.progress.bind(this);
+      this.boundDrawFrame = this.drawFrame.bind(this);
+
       this.pixels = null;
 
       this.setSize(this.thecanvas);
@@ -101,6 +113,10 @@ class Main {
       this.ctx?.drawImage(img, 0, 0, img.width, img.height, 0, 0, pwidth, pheight)
    }
 
+   drawFrame(timeStamp: number) {
+      this.draw();
+   }
+
    draw() {
       if (this.ctx === null) {
          return;
@@ -130,19 +146,34 @@ class Main {
       this.ctx.strokeStyle = "white";
       this.strokeLine(tl, br);
       this.strokeLine(tr, bl);
+      
+      for (let line of this.lines) {
+         this.strokeLine(line[0], line[1]);
+      }
    }
 
-   handleGenerateButton(this: HTMLElement, ev: MouseEvent): any {
+   progress(p1: Vector2, p2: Vector2): void {
+      this.lines.push([p1, p2]);
+      window.requestAnimationFrame(this.boundDrawFrame);
+   }
+
+   handleGenerateButton(ev: Event): any {
       ev.preventDefault();
-      alert("generate");
+
+      this.lines = [];
+      const ch = new Crosshatcher();
+      ch.generate(this.linespacing, this.layers,
+                  this.drawingWidth, this.drawingHeight,
+                  this.imageWidth, this.imageHeight,
+                  this.boundProgress);
    }
 
-   handleExportButton(this: HTMLElement, ev: MouseEvent): any {
+   handleExportButton(ev: Event): any {
       ev.preventDefault();
       alert("export");
    }
 
-   handleLoadButton(this: HTMLElement, ev: Event) {
+   handleLoadButton(ev: Event) {
       ev.preventDefault();
       alert("load");
    }
@@ -303,19 +334,20 @@ class Main {
 
       this.scaleFactor = Math.min(sf1, sf2);
       this.ctx.lineWidth = 1;
+      this.lines = [];
 
       this.draw();
    }
 
    init() {
       const exportButton = <HTMLElement>document.getElementById("exportButton");
-      exportButton?.addEventListener("click", this.handleExportButton);
+      exportButton?.addEventListener("click", this.boundHandleExportButton);
 
       //const loadButton = <HTMLElement>document.getElementById("loadButton");
-      //loadButton?.addEventListener("click", this.handleLoadButton);
+      //loadButton?.addEventListener("click", this.boundHandleLoadButton);
 
       const generateButton = <HTMLElement>document.getElementById("generateButton");
-      generateButton?.addEventListener("click", this.handleGenerateButton);
+      generateButton?.addEventListener("click", this.boundHandleGenerateButton);
 
       this.layersLabel = <HTMLElement>document.getElementById("layersLabel");
       this.spacingLabel = <HTMLElement>document.getElementById("spacingLabel");

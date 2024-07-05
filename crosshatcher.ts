@@ -1,7 +1,7 @@
 import { TProgressCallback } from "./types.js";
 import Vector2 from "./vector2.js";
 import Rect from "./rect.js";
-   
+
 class Crosshatcher {
    private linespacing: number = 0;
    private layers: number = 0;
