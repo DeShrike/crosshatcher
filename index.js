@@ -1,5 +1,5 @@
 import Vector2 from "./vector2.js";
-class Crosshatch {
+class Main {
     constructor() {
         this.thecanvas = null;
         this.ctx = null;
@@ -184,8 +184,8 @@ class Crosshatch {
             const yOrg = e.offsetY / oldScale;
             const yNew = yOrg * this.scaleFactor;
             const yDiff = e.offsetY - yNew;
-            this.translateAmount.x += xDiff;
-            this.translateAmount.y += yDiff;
+            this.fullTranslateAmount.x += xDiff;
+            this.fullTranslateAmount.y += yDiff;
             this.draw();
         }
     }
@@ -217,10 +217,10 @@ class Crosshatch {
         if (this.ctx == null) {
             return;
         }
-        console.log(`New Project: ${this.imageName}: ${this.imageWidth}x${this.imageHeight}`);
+        // console.log(`New Project: ${this.imageName}: ${this.imageWidth}x${this.imageHeight}`);
         this.drawingWidth = 1000;
         this.drawingHeight = Math.ceil(this.imageHeight * (this.drawingWidth / this.imageWidth));
-        console.log(`Drawing ${this.drawingWidth}x${this.drawingHeight}`);
+        // console.log(`Drawing ${this.drawingWidth}x${this.drawingHeight}`);
         this.fullTranslateAmount = new Vector2(0, 0);
         this.translateAmount = new Vector2(0, 0);
         this.scaleFactor = 1;
@@ -234,7 +234,7 @@ class Crosshatch {
         if (this.drawingHeight > ch) {
             sf2 = ch / this.drawingHeight;
         }
-        console.log(`SF1: ${sf1}   SF2: ${sf2}`);
+        // console.log(`SF1: ${sf1}   SF2: ${sf2}`);
         this.scaleFactor = Math.min(sf1, sf2);
         this.ctx.lineWidth = 1;
         this.draw();
@@ -278,7 +278,7 @@ class Crosshatch {
         }
         canvas.height = container.offsetHeight - (header.offsetHeight + footer.offsetHeight + 10);
         canvas.width = container.offsetWidth - 10;
-        console.log(`Canvas: ${canvas.width}x${canvas.height}`);
+        // console.log(`Canvas: ${canvas.width}x${canvas .height}`);
     }
     run() {
         this.setLabels();
@@ -287,6 +287,6 @@ class Crosshatch {
     }
 }
 (() => {
-    const c = new Crosshatch();
+    const c = new Main();
     c.init();
 })();
