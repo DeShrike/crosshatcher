@@ -7,6 +7,7 @@ class Crosshatch {
         this.spacingLabel = null;
         this.linespacing = 20;
         this.layers = 5;
+        this.thumbWidth = 150;
         this.pixels = null;
         this.imageWidth = 0;
         this.imageHeight = 0;
@@ -26,6 +27,7 @@ class Crosshatch {
         this.boundHandleFileInput = this.handleFileInput.bind(this);
         this.boundHandleMouseEvent = this.handleMouseEvent.bind(this);
         this.boundHandleWheelEvent = this.handleWheelEvent.bind(this);
+        this.boundHandleResizeEvent = this.handleResizeEvent.bind(this);
         this.pixels = null;
         this.setSize(this.thecanvas);
         this.ctx = this.thecanvas.getContext("2d");
@@ -34,6 +36,22 @@ class Crosshatch {
         }
         this.ctx.fillStyle = "#181818";
         this.ctx.fillRect(0, 0, this.thecanvas.width, this.thecanvas.height);
+    }
+    debounce(func, wait, immediate) {
+        let timeout;
+        return () => {
+            const context = this, args = arguments;
+            const later = function () {
+                timeout = undefined;
+                if (!immediate)
+                    func.apply(context, args);
+            };
+            const callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow)
+                func.apply(context, args);
+        };
     }
     fillCircle(center, radius) {
         var _a, _b, _c;
@@ -55,7 +73,7 @@ class Crosshatch {
     drawImagePreview() {
         var _a;
         var img = document.getElementById("theimage");
-        let pwidth = 160;
+        let pwidth = this.thumbWidth;
         let pheight = img.height * (pwidth / img.width);
         (_a = this.ctx) === null || _a === void 0 ? void 0 : _a.drawImage(img, 0, 0, img.width, img.height, 0, 0, pwidth, pheight);
     }
@@ -82,6 +100,10 @@ class Crosshatch {
         this.ctx.strokeStyle = "white";
         this.strokeLine(tl, br);
         this.strokeLine(tr, bl);
+    }
+    handleGenerateButton(ev) {
+        ev.preventDefault();
+        alert("generate");
     }
     handleExportButton(ev) {
         ev.preventDefault();
@@ -139,17 +161,32 @@ class Crosshatch {
     screenToWorld(v) {
         return v.sub(this.fullTranslateAmount).scale(1 / this.scaleFactor);
     }
+    handleResizeEvent(e) {
+        console.log("Resize");
+        if (this.thecanvas !== null) {
+            this.setSize(this.thecanvas);
+        }
+        this.draw();
+    }
+    changeScale(delta) {
+        const zoomFactor = 0.001;
+        this.scaleFactor *= Math.exp(delta * zoomFactor);
+    }
     handleWheelEvent(e) {
         if (e.type === "wheel") {
-            console.log(`Delta: ${e.deltaX} x ${e.deltaY}`);
-            if (e.deltaY < 0) {
-                this.scaleFactor += (e.deltaY / 1000);
-                this.draw();
-            }
-            else if (e.deltaY > 0) {
-                this.scaleFactor += (e.deltaY / 1000);
-                this.draw();
-            }
+            const x = this.drawingWidth / 2;
+            const y = this.drawingHeight / 2;
+            const oldScale = this.scaleFactor;
+            this.changeScale(-e.deltaY);
+            const xOrg = e.offsetX / oldScale;
+            const xNew = xOrg * this.scaleFactor;
+            const xDiff = e.offsetX - xNew;
+            const yOrg = e.offsetY / oldScale;
+            const yNew = yOrg * this.scaleFactor;
+            const yDiff = e.offsetY - yNew;
+            this.translateAmount.x += xDiff;
+            this.translateAmount.y += yDiff;
+            this.draw();
         }
     }
     handleMouseEvent(e) {
@@ -162,7 +199,9 @@ class Crosshatch {
             this.mouseDownPos = new Vector2(e.offsetX, e.offsetY);
             this.mouseDown = true;
             // console.log(this.mouseDownPos);
-            this.ctx.fillStyle = "blue";
+            if (this.ctx !== null) {
+                this.ctx.fillStyle = "blue";
+            }
             this.fillCircle(this.screenToWorld(this.mouseDownPos), 10);
         }
         else if (e.type === "mousemove") {
@@ -206,6 +245,8 @@ class Crosshatch {
         exportButton === null || exportButton === void 0 ? void 0 : exportButton.addEventListener("click", this.handleExportButton);
         //const loadButton = <HTMLElement>document.getElementById("loadButton");
         //loadButton?.addEventListener("click", this.handleLoadButton);
+        const generateButton = document.getElementById("generateButton");
+        generateButton === null || generateButton === void 0 ? void 0 : generateButton.addEventListener("click", this.handleGenerateButton);
         this.layersLabel = document.getElementById("layersLabel");
         this.spacingLabel = document.getElementById("spacingLabel");
         const fileinput = document.querySelector('input[type="file"]');
@@ -225,6 +266,7 @@ class Crosshatch {
         (_b = this.thecanvas) === null || _b === void 0 ? void 0 : _b.addEventListener("mouseup", this.boundHandleMouseEvent);
         (_c = this.thecanvas) === null || _c === void 0 ? void 0 : _c.addEventListener("mousemove", this.boundHandleMouseEvent);
         (_d = this.thecanvas) === null || _d === void 0 ? void 0 : _d.addEventListener("wheel", this.boundHandleWheelEvent);
+        window.addEventListener("resize", this.debounce(this.boundHandleResizeEvent, 1000, false), false);
     }
     setSize(canvas) {
         const container = document.getElementById("container");
