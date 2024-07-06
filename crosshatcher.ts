@@ -12,6 +12,7 @@ class Crosshatcher {
 
    private imageWidth: number = 0;
    private imageHeight: number = 0;
+   private pixels: Uint8ClampedArray | null = null;
    
    // origin on screen
    private osx: number = 0;
@@ -67,7 +68,23 @@ class Crosshatcher {
    }
 
    sampleImage(mx: number, my: number): number {
-      return 127;
+      if (this.pixels === null) {
+         return 127;
+      }
+      
+      const mmx = Math.floor(mx / this.drawingWidth * this.imageWidth);
+      const mmy = Math.floor(my / this.drawingHeight * this.imageHeight);
+
+      const ix: number = (mmx * 4) + (mmy * this.imageWidth * 4);
+      if (ix >= this.pixels.length) {
+         //console.log("Out of bounds", ix, this.pixels.length);
+         return 127;
+      }
+      
+      const r = this.pixels[ix] / 255;
+      const g = this.pixels[ix + 1] / 255;
+      const b = this.pixels[ix + 2] / 255;
+      return Math.floor((0.2126 * r + 0.7152 * g + 0.0722 * b) * 255);
    }
 
    doLine(threshold: number, p1: Vector2, p2: Vector2): void {
@@ -89,8 +106,8 @@ class Crosshatcher {
          let y1 = p1.y + dy * i;
          let x2 = p1.x + dx * (i + 1);
          let y2 = p1.y + dy * (i + 1);
-         let mx = ((x2 - x1) / 2.0) + x1;
-         let my = ((y2 - y1) / 2.0) + y1;
+         let mx = Math.floor(((x2 - x1) / 2.0) + x1);
+         let my = Math.floor(((y2 - y1) / 2.0) + y1);
 
          let s = this.sampleImage(mx, my);
 
@@ -205,6 +222,7 @@ class Crosshatcher {
    generate(lineWidth: number, layers: number,
             drawingWidth: number, drawingHeight: number,
             imageWidth: number, imageHeight: number,
+            pixels: Uint8ClampedArray,
             callback: TProgressCallback): void {
       this.linespacing = lineWidth;
       this.layers = layers;
@@ -213,8 +231,12 @@ class Crosshatcher {
       this.drawingHeight = drawingHeight;
       this.imageWidth = imageWidth;
       this.imageHeight = imageHeight;
+      this.pixels = pixels;
 
       this.radius = Math.sqrt(2.0) * (1.1 * drawingHeight);
+
+      console.log("Image:", this.imageWidth, this.imageHeight);
+      console.log("Drawing:", this.drawingWidth, this.drawingHeight);
 
       if (drawingWidth > drawingHeight) {
          this.radius = Math.sqrt(2.0) * (1.1 * drawingWidth);

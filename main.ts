@@ -24,7 +24,7 @@ class Main {
 
    private boundHandleGenerateButton: (this: HTMLElement, ev: Event) => any;
    private boundHandleExportButton: (this: HTMLElement, ev: Event) => any;
-   
+
    private thumbWidth: number = 150;
    private pixels: Uint8ClampedArray | null = null;
    private imageWidth: number = 0;
@@ -62,8 +62,7 @@ class Main {
       this.setSize(this.thecanvas);
 
       this.ctx = this.thecanvas.getContext("2d");
-      if (this.ctx === null)
-      {
+      if (this.ctx === null) {
          throw new Error("2D context not available.");
       }
 
@@ -86,15 +85,13 @@ class Main {
        };
    }
 
-   fillCircle(center: Vector2, radius: number)
-   {
+   fillCircle(center: Vector2, radius: number) {
       this.ctx?.beginPath();
       this.ctx?.arc(...center.array(), radius, 0, 2 * Math.PI);
       this.ctx?.fill();
    }
 
-   strokeLine(p1: Vector2, p2: Vector2)
-   {
+   strokeLine(p1: Vector2, p2: Vector2) {
       this.ctx?.beginPath();
       this.ctx?.moveTo(...p1.array());
       this.ctx?.lineTo(...p2.array());
@@ -136,7 +133,10 @@ class Main {
       this.ctx.translate(...this.translateAmount.add(this.fullTranslateAmount).array());
       this.ctx.scale(this.scaleFactor, this.scaleFactor);
 
-      this.ctx.fillStyle = "red";
+      this.ctx.fillStyle = "#FFFFFF";
+      this.ctx.fillRect(...tl.array(), this.drawingWidth, this.drawingHeight);
+
+      /*this.ctx.fillStyle = "red";
       this.fillCircle(tl, 10);
       this.ctx.fillStyle = "green";
       this.fillCircle(tr, 10);
@@ -145,27 +145,35 @@ class Main {
       
       this.ctx.strokeStyle = "white";
       this.strokeLine(tl, br);
-      this.strokeLine(tr, bl);
+      this.strokeLine(tr, bl);*/
       
+      this.ctx.strokeStyle = "black";
       for (let line of this.lines) {
          this.strokeLine(line[0], line[1]);
       }
+
+      console.log("Line Count: ", this.lines.length);
    }
 
    progress(p1: Vector2, p2: Vector2): void {
       this.lines.push([p1, p2]);
-      window.requestAnimationFrame(this.boundDrawFrame);
    }
 
    handleGenerateButton(ev: Event): any {
       ev.preventDefault();
+
+      if (this.pixels === null || this.pixels.length === 0) {
+         return;
+      }
 
       this.lines = [];
       const ch = new Crosshatcher();
       ch.generate(this.linespacing, this.layers,
                   this.drawingWidth, this.drawingHeight,
                   this.imageWidth, this.imageHeight,
+                  this.pixels,
                   this.boundProgress);
+      window.requestAnimationFrame(this.boundDrawFrame);
    }
 
    handleExportButton(ev: Event): any {
@@ -178,8 +186,7 @@ class Main {
       alert("load");
    }
 
-   handleFileInput(e: any)
-   {
+   handleFileInput(e: any) {
       if (e.target.files && e.target.files[0]) {
          console.log(e.target.files[0].name);
          var img = <HTMLImageElement>document.getElementById("theimage");
@@ -254,7 +261,7 @@ class Main {
 
    handleWheelEvent(e: WheelEvent) {
       if (e.type === "wheel") {
-         
+
          const x = this.drawingWidth / 2;
          const y = this.drawingHeight / 2;
 
@@ -320,13 +327,11 @@ class Main {
 
       let sf1: number = 1;
       let sf2: number = 1;
-      if (this.drawingWidth > cw)
-      {
+      if (this.drawingWidth > cw) {
          sf1 = cw / this.drawingWidth;
       }
 
-      if (this.drawingHeight > ch)
-      {
+      if (this.drawingHeight > ch) {
          sf2 = ch / this.drawingHeight;
       }
 
@@ -335,7 +340,9 @@ class Main {
       this.scaleFactor = Math.min(sf1, sf2);
       this.ctx.lineWidth = 1;
       this.lines = [];
-
+      console.log(this.pixels);
+      console.log(this.pixels?.length);
+      
       this.draw();
    }
 
@@ -360,8 +367,7 @@ class Main {
       const decSpacingButton = <HTMLElement>document.getElementById("decSpacingButton");
       const incSpacingButton = <HTMLElement>document.getElementById("incSpacingButton");
 
-      if (!decLayersButton || !incLayersButton || !decSpacingButton || !incSpacingButton)
-      {
+      if (!decLayersButton || !incLayersButton || !decSpacingButton || !incSpacingButton) {
          throw new Error("Buttons not found.");
       }
 
@@ -376,6 +382,7 @@ class Main {
       this.thecanvas?.addEventListener("wheel", this.boundHandleWheelEvent);
 
       window.addEventListener("resize", this.debounce(this.boundHandleResizeEvent, 1000, false), false);
+      this.setLabels();
    }
 
    setSize(canvas: HTMLCanvasElement) {
@@ -394,15 +401,15 @@ class Main {
       // console.log(`Canvas: ${canvas.width}x${canvas .height}`);
    }
 
-   run() {
+   /*run() {
       this.setLabels();
       console.log(this.pixels);
 
       this.draw();
-   }
+   }*/
 }
 
-(() => { 
+(() => {
    const c = new Main();
    c.init();
 })();

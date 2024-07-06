@@ -100,28 +100,36 @@ class Main {
         this.drawImagePreview();
         this.ctx.translate(...this.translateAmount.add(this.fullTranslateAmount).array());
         this.ctx.scale(this.scaleFactor, this.scaleFactor);
-        this.ctx.fillStyle = "red";
+        this.ctx.fillStyle = "#FFFFFF";
+        this.ctx.fillRect(...tl.array(), this.drawingWidth, this.drawingHeight);
+        /*this.ctx.fillStyle = "red";
         this.fillCircle(tl, 10);
         this.ctx.fillStyle = "green";
         this.fillCircle(tr, 10);
         this.fillCircle(bl, 10);
         this.fillCircle(br, 10);
+        
         this.ctx.strokeStyle = "white";
         this.strokeLine(tl, br);
-        this.strokeLine(tr, bl);
+        this.strokeLine(tr, bl);*/
+        this.ctx.strokeStyle = "black";
         for (let line of this.lines) {
             this.strokeLine(line[0], line[1]);
         }
+        console.log("Line Count: ", this.lines.length);
     }
     progress(p1, p2) {
         this.lines.push([p1, p2]);
-        window.requestAnimationFrame(this.boundDrawFrame);
     }
     handleGenerateButton(ev) {
         ev.preventDefault();
+        if (this.pixels === null || this.pixels.length === 0) {
+            return;
+        }
         this.lines = [];
         const ch = new Crosshatcher();
-        ch.generate(this.linespacing, this.layers, this.drawingWidth, this.drawingHeight, this.imageWidth, this.imageHeight, this.boundProgress);
+        ch.generate(this.linespacing, this.layers, this.drawingWidth, this.drawingHeight, this.imageWidth, this.imageHeight, this.pixels, this.boundProgress);
+        window.requestAnimationFrame(this.boundDrawFrame);
     }
     handleExportButton(ev) {
         ev.preventDefault();
@@ -232,6 +240,7 @@ class Main {
         }
     }
     initProject() {
+        var _a;
         if (this.ctx == null) {
             return;
         }
@@ -256,6 +265,8 @@ class Main {
         this.scaleFactor = Math.min(sf1, sf2);
         this.ctx.lineWidth = 1;
         this.lines = [];
+        console.log(this.pixels);
+        console.log((_a = this.pixels) === null || _a === void 0 ? void 0 : _a.length);
         this.draw();
     }
     init() {
@@ -286,6 +297,7 @@ class Main {
         (_c = this.thecanvas) === null || _c === void 0 ? void 0 : _c.addEventListener("mousemove", this.boundHandleMouseEvent);
         (_d = this.thecanvas) === null || _d === void 0 ? void 0 : _d.addEventListener("wheel", this.boundHandleWheelEvent);
         window.addEventListener("resize", this.debounce(this.boundHandleResizeEvent, 1000, false), false);
+        this.setLabels();
     }
     setSize(canvas) {
         const container = document.getElementById("container");
@@ -298,11 +310,6 @@ class Main {
         canvas.height = container.offsetHeight - (header.offsetHeight + footer.offsetHeight + 10);
         canvas.width = container.offsetWidth - 10;
         // console.log(`Canvas: ${canvas.width}x${canvas .height}`);
-    }
-    run() {
-        this.setLabels();
-        console.log(this.pixels);
-        this.draw();
     }
 }
 (() => {
