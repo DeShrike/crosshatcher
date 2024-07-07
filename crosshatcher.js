@@ -62,13 +62,16 @@ class Crosshatcher {
         const mmy = Math.floor(my / this.drawingHeight * this.imageHeight);
         const ix = (mmx * 4) + (mmy * this.imageWidth * 4);
         if (ix >= this.pixels.length) {
-            //console.log("Out of bounds", ix, this.pixels.length);
+            console.log("Out of bounds", ix, this.pixels.length);
             return 127;
         }
+        return this.pixels[ix];
+        /*
         const r = this.pixels[ix] / 255;
         const g = this.pixels[ix + 1] / 255;
         const b = this.pixels[ix + 2] / 255;
         return Math.floor((0.2126 * r + 0.7152 * g + 0.0722 * b) * 255);
+        */
     }
     doLine(threshold, p1, p2) {
         const d = this.hypot(p1, p2);
@@ -93,28 +96,22 @@ class Crosshatcher {
             if (s <= threshold) {
                 if (pendown != 1) {
                     pendown = 1;
-                    //myfile.write(f"start line {x1} {y1}")
                     startx = x1;
                     starty = y1;
                 }
                 else {
                     if (pendown == 1 && i == nsegs - 2) {
-                        //myfile.write(f"end line {x2} {y2}\n")
-                        //svgfile.write(f"M {startx} {starty} L {x2} {y2}")
-                        //pygame.draw.line(screen, black, (startx, starty), (x1, y1), 1);
-                        if (this.callback !== null) {
-                            this.callback(new Vector2(startx, starty), new Vector2(x1, y1));
-                        }
                         pendown = 0;
+                        if (this.callback !== null) {
+                            this.callback(new Vector2(startx, starty), new Vector2(x2, y2));
+                            //this.callback(new Vector2(startx, starty), new Vector2(x1, y1));
+                        }
                     }
                 }
             }
             else {
                 if (pendown == 1) {
                     pendown = 0;
-                    //myfile.write(f"end line {x2} {y2}\n")
-                    //svgfile.write(f"M {startx} {starty} L {mx} {my}")
-                    //pygame.draw.line(screen, black, (startx, starty), (mx, my), 1);
                     if (this.callback !== null) {
                         this.callback(new Vector2(startx, starty), new Vector2(mx, my));
                     }
@@ -164,10 +161,10 @@ class Crosshatcher {
     }
     doLayer(layer, threshold, angle) {
         const count = Math.floor((this.radius * 2.0) / this.linespacing);
-        const cx = this.drawingWidth / 2.0;
-        ///      + random.randint(10, 500);
-        const cy = this.drawingHeight / 2.0;
-        ///     + random.randint(10, 500);
+        //const cx = this.drawingWidth / 2.0
+        const cx = (Math.random() * this.drawingWidth);
+        //const cy = this.drawingHeight / 2.0
+        const cy = (Math.random() * this.drawingHeight);
         for (let i = Math.floor(-count / 2); i < Math.floor(count / 2); i++) {
             let x1 = cx + (i * this.linespacing);
             let y1 = cy - this.radius * 2;
@@ -196,8 +193,8 @@ class Crosshatcher {
         this.imageHeight = imageHeight;
         this.pixels = pixels;
         this.radius = Math.sqrt(2.0) * (1.1 * drawingHeight);
-        console.log("Image:", this.imageWidth, this.imageHeight);
-        console.log("Drawing:", this.drawingWidth, this.drawingHeight);
+        // console.log("Image:", this.imageWidth, this.imageHeight);
+        // console.log("Drawing:", this.drawingWidth, this.drawingHeight);
         if (drawingWidth > drawingHeight) {
             this.radius = Math.sqrt(2.0) * (1.1 * drawingWidth);
         }

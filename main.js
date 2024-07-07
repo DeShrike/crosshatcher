@@ -6,8 +6,9 @@ class Main {
         this.ctx = null;
         this.layersLabel = null;
         this.spacingLabel = null;
-        this.linespacing = 20;
-        this.layers = 2;
+        this.linecountLabel = null;
+        this.linespacing = 10;
+        this.layers = 5;
         this.lines = [];
         this.thumbWidth = 150;
         this.pixels = null;
@@ -75,6 +76,12 @@ class Main {
     setLabels() {
         this.layersLabel.innerHTML = `${this.layers}`;
         this.spacingLabel.innerHTML = `${this.linespacing}`;
+        if (this.lines === null || this.lines.length === 0) {
+            this.linecountLabel.innerHTML = "";
+        }
+        else {
+            this.linecountLabel.innerHTML = `${this.lines.length} lines`;
+        }
     }
     drawImagePreview() {
         var _a;
@@ -97,7 +104,6 @@ class Main {
         this.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset Scale
         this.ctx.fillStyle = "#181818";
         this.ctx.fillRect(0, 0, this.thecanvas.width, this.thecanvas.height);
-        this.drawImagePreview();
         this.ctx.translate(...this.translateAmount.add(this.fullTranslateAmount).array());
         this.ctx.scale(this.scaleFactor, this.scaleFactor);
         this.ctx.fillStyle = "#FFFFFF";
@@ -116,7 +122,10 @@ class Main {
         for (let line of this.lines) {
             this.strokeLine(line[0], line[1]);
         }
-        console.log("Line Count: ", this.lines.length);
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset Scale
+        this.drawImagePreview();
+        this.ctx.restore();
     }
     progress(p1, p2) {
         this.lines.push([p1, p2]);
@@ -129,11 +138,33 @@ class Main {
         this.lines = [];
         const ch = new Crosshatcher();
         ch.generate(this.linespacing, this.layers, this.drawingWidth, this.drawingHeight, this.imageWidth, this.imageHeight, this.pixels, this.boundProgress);
+        this.setLabels();
         window.requestAnimationFrame(this.boundDrawFrame);
+    }
+    downloadURI(data, name) {
+        var link = document.createElement("a");
+        link.download = name;
+        link.type = "text/plain";
+        var blob = new Blob([data]);
+        link.href = URL.createObjectURL(blob);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
     handleExportButton(ev) {
         ev.preventDefault();
-        alert("export");
+        if (this.lines === null || this.lines.length === 0) {
+            return;
+        }
+        let svg = "";
+        svg += `<svg height="${this.drawingHeight}" width="${this.drawingWidth}" style="background-color:#ffffff00" version="1.1" xmlns="http://www.w3.org/2000/svg">\n`;
+        svg += "<path d=\"";
+        for (let line of this.lines) {
+            svg += ` M ${line[0].x} ${line[0].y} L ${line[1].x} ${line[1].y}`;
+        }
+        svg += "Z \" \nstyle=\"fill:none;stroke:black;stroke-width:1\"/>\n";
+        svg += "</svg>\n";
+        this.downloadURI(svg, this.imageName + ".svg");
     }
     handleLoadButton(ev) {
         ev.preventDefault();
@@ -141,7 +172,7 @@ class Main {
     }
     handleFileInput(e) {
         if (e.target.files && e.target.files[0]) {
-            console.log(e.target.files[0].name);
+            // console.log(e.target.files[0].name);
             var img = document.getElementById("theimage");
             img.onload = () => {
                 let tempcanvas = document.createElement("canvas");
@@ -178,17 +209,28 @@ class Main {
     }
     handleChangeLayers(delta) {
         this.layers += delta;
+        if (this.layers < 1) {
+            this.layers = 1;
+        }
+        if (this.layers > 20) {
+            this.layers = 20;
+        }
         this.setLabels();
     }
     handleChangeSpacing(delta) {
         this.linespacing += delta;
+        if (this.linespacing < 1) {
+            this.linespacing = 1;
+        }
+        if (this.linespacing > 50) {
+            this.linespacing = 50;
+        }
         this.setLabels();
     }
     screenToWorld(v) {
         return v.sub(this.fullTranslateAmount).scale(1 / this.scaleFactor);
     }
     handleResizeEvent(e) {
-        console.log("Resize");
         if (this.thecanvas !== null) {
             this.setSize(this.thecanvas);
         }
@@ -224,7 +266,6 @@ class Main {
         else if (e.type === "mousedown") {
             this.mouseDownPos = new Vector2(e.offsetX, e.offsetY);
             this.mouseDown = true;
-            // console.log(this.mouseDownPos);
             if (this.ctx !== null) {
                 this.ctx.fillStyle = "blue";
             }
@@ -234,21 +275,35 @@ class Main {
             if (this.mouseDown) {
                 const newPos = new Vector2(e.offsetX, e.offsetY);
                 this.translateAmount = newPos.sub(this.mouseDownPos);
-                //this.mouseDownPos = newPos;
                 this.draw();
             }
         }
     }
+    convertToLum() {
+        if (this.pixels === null) {
+            return;
+        }
+        for (let y = 0; y < this.imageHeight; ++y) {
+            for (let x = 0; x < this.imageWidth; ++x) {
+                const ix = (x * 4) + (y * this.imageWidth * 4);
+                const r = this.pixels[ix] / 255;
+                const g = this.pixels[ix + 1] / 255;
+                const b = this.pixels[ix + 2] / 255;
+                const w = Math.floor((0.2126 * r + 0.7152 * g + 0.0722 * b) * 255);
+                this.pixels[ix] = w;
+                this.pixels[ix + 1] = w;
+                this.pixels[ix + 2] = w;
+            }
+        }
+    }
     initProject() {
-        var _a;
         if (this.ctx == null) {
             return;
         }
-        // console.log(`New Project: ${this.imageName}: ${this.imageWidth}x${this.imageHeight}`);
+        console.log(`New Project: ${this.imageName}: ${this.imageWidth}x${this.imageHeight}`);
         this.drawingWidth = 1000;
         this.drawingHeight = Math.ceil(this.imageHeight * (this.drawingWidth / this.imageWidth));
-        // console.log(`Drawing ${this.drawingWidth}x${this.drawingHeight}`);
-        this.fullTranslateAmount = new Vector2(0, 0);
+        this.fullTranslateAmount = new Vector2(this.thumbWidth, 0);
         this.translateAmount = new Vector2(0, 0);
         this.scaleFactor = 1;
         const cw = this.ctx.canvas.width;
@@ -261,13 +316,12 @@ class Main {
         if (this.drawingHeight > ch) {
             sf2 = ch / this.drawingHeight;
         }
-        // console.log(`SF1: ${sf1}   SF2: ${sf2}`);
         this.scaleFactor = Math.min(sf1, sf2);
         this.ctx.lineWidth = 1;
         this.lines = [];
-        console.log(this.pixels);
-        console.log((_a = this.pixels) === null || _a === void 0 ? void 0 : _a.length);
+        this.convertToLum();
         this.draw();
+        this.setLabels();
     }
     init() {
         var _a, _b, _c, _d;
@@ -279,6 +333,7 @@ class Main {
         generateButton === null || generateButton === void 0 ? void 0 : generateButton.addEventListener("click", this.boundHandleGenerateButton);
         this.layersLabel = document.getElementById("layersLabel");
         this.spacingLabel = document.getElementById("spacingLabel");
+        this.linecountLabel = document.getElementById("linecountLabel");
         const fileinput = document.querySelector('input[type="file"]');
         fileinput === null || fileinput === void 0 ? void 0 : fileinput.addEventListener('change', this.boundHandleFileInput);
         const decLayersButton = document.getElementById("decLayersButton");
@@ -309,7 +364,6 @@ class Main {
         }
         canvas.height = container.offsetHeight - (header.offsetHeight + footer.offsetHeight + 10);
         canvas.width = container.offsetWidth - 10;
-        // console.log(`Canvas: ${canvas.width}x${canvas .height}`);
     }
 }
 (() => {
