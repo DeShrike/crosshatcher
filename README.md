@@ -8,7 +8,9 @@ Go to [https://deshrike.github.io/crosshatcher/](https://deshrike.github.io/cros
 
 ## Examples
 
+![Example 1](example1.png)
 
+![Example 2](example2.png)
 
 ## Running locally
 
