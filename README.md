@@ -4,7 +4,7 @@ Crosshatching in TypeScript.
 
 ## Try it now
 
-See 
+Go to [https://deshrike.github.io/crosshatcher/](https://deshrike.github.io/crosshatcher/)
 
 ## Examples
 
@@ -43,5 +43,5 @@ Open http://127.0.0.1:8000 in your browser.
 
 ## Credits
 
-Loosely based on Python project 'crosshatcher' by Stephen M. Cameron
+Based on Python project 'crosshatcher' by Stephen M. Cameron
 
