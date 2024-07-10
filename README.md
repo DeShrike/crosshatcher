@@ -25,10 +25,16 @@ npm install
 
 ### Development
 
+Simple build:
+
+```console
+npm run build
+```
+
 Run Typescript in watch mode:
 
 ```console
-./node_modules/.bin/tsc -w
+npm run watch
 ```
 
 Changes made to Typescript files will be transpiled to Javascript.
@@ -38,7 +44,7 @@ Changes made to Typescript files will be transpiled to Javascript.
 Run a local webserver:
 
 ```console
-python -m http.server
+npm run server
 ```
 
 Open http://127.0.0.1:8000 in your browser.
